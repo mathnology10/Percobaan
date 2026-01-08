@@ -2,149 +2,261 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retro Maze 3D</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mobile Maze 3D</title>
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --primary: #3b82f6;
+            --accent: #f59e0b;
+            --surface: #1e293b;
+            --text: #f8fafc;
+        }
+
         body {
-            background-color: #202020;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             overflow: hidden;
-            touch-action: none; /* Mencegah zoom pada HP */
+            touch-action: none; /* Mencegah pull-to-refresh dll */
+        }
+
+        /* --- TOP BAR (Header & Utility) --- */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 20;
+            height: 60px;
+            box-sizing: border-box;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         h1 {
             font-size: 16px;
-            margin: 5px;
+            font-weight: 800;
+            margin: 0;
+            color: var(--primary);
+            letter-spacing: 1px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #88ff88;
         }
 
-        #game-container {
-            position: relative;
-            border: 4px solid #444;
-            background: #000;
-            width: 320px;
-            height: 240px;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        .header-actions {
+            display: flex;
+            gap: 10px;
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated; /* Efek kotak-kotak retro */
-            display: block;
-        }
-
-        /* Scanlines effect overlay */
-        #scanlines {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        /* Controls UI */
-        #controls {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: 60px 60px 60px;
-            grid-gap: 10px;
-        }
-
-        .btn {
-            background: #333;
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            height: 50px;
-            font-size: 24px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
+        .btn-icon {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
+            cursor: pointer;
+        }
+        .btn-icon:active { background: var(--primary); }
+
+        /* --- GAME AREA (Middle) --- */
+        #game-container {
+            flex: 1; /* Mengisi sisa ruang */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 10px;
+            background: #000;
         }
 
-        .btn:active {
-            background: #00ff00;
-            color: #000;
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 600px; /* Batas tablet */
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 2px solid #333;
         }
 
-        .btn-empty {
-            border: none;
-            background: transparent;
-            cursor: default;
+        canvas#screen {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
         }
 
-        #status {
-            margin-top: 10px;
-            height: 20px;
+        /* --- OVERLAYS --- */
+        #map-overlay, #win-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        #map-overlay { background: rgba(15, 23, 42, 0.85); }
+        #win-screen { background: rgba(15, 23, 42, 0.95); }
+
+        canvas#minimap {
+            background: #000;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        
+        .overlay-msg {
+            margin-top: 15px;
+            color: #94a3b8;
             font-size: 14px;
         }
 
-        #win-screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+        .btn-main {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* --- CONTROLS (Bottom) --- */
+        #controls-area {
+            height: 280px; /* Area tetap untuk kontrol */
+            background: var(--surface);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            display: none; /* Hidden by default */
-            z-index: 10;
+            padding-bottom: 20px; /* Safe area for iPhone home bar */
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
-        
-        #win-screen h2 {
-            color: yellow;
-            text-shadow: 2px 2px #f00;
+
+        .dpad-grid {
+            display: grid;
+            grid-template-columns: 80px 80px 80px;
+            grid-template-rows: 80px 80px;
+            gap: 10px;
+            justify-content: center;
+            align-content: center;
         }
+
+        .btn-ctrl {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, #253146, #1a2332);
+            box-shadow: 8px 8px 16px #0f141d, -8px -8px 16px #2d3e5b;
+            border: none;
+            color: var(--primary);
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.05s;
+        }
+
+        .btn-ctrl:active {
+            box-shadow: inset 8px 8px 16px #0f141d, inset -8px -8px 16px #2d3e5b;
+            color: #fff;
+            transform: scale(0.95);
+        }
+
+        /* Status Text (Floating) */
+        #status-toast {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(245, 158, 11, 0.9); /* Amber */
+            color: black;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>Labirin Retro</h1>
+    <header>
+        <h1>Maze 3D</h1>
+        <div class="header-actions">
+            <button class="btn-icon" onclick="toggleMap()" title="Peta">🗺️</button>
+            <button class="btn-icon" onclick="location.reload()" title="Reset">↻</button>
+        </div>
+    </header>
+
+    <div id="status-toast">CARI PINTU KUNING</div>
 
     <div id="game-container">
-        <canvas id="screen" width="160" height="120"></canvas>
-        <div id="scanlines"></div>
-        
-        <div id="win-screen">
-            <h2>ANDA LOLOS!</h2>
-            <button class="btn" style="width:120px; font-size:14px;" onclick="location.reload()">Main Lagi</button>
+        <div id="game-frame">
+            <canvas id="screen" width="320" height="240"></canvas>
+            
+            <div id="map-overlay" onclick="toggleMap()">
+                <canvas id="minimap" width="250" height="250"></canvas>
+                <div class="overlay-msg">Ketuk layar untuk menutup peta</div>
+            </div>
+
+            <div id="win-screen">
+                <h2 style="font-size: 32px; color: #fbbf24; margin-bottom: 5px;">BERHASIL!</h2>
+                <p style="color: #cbd5e1;">Anda keluar dari labirin.</p>
+                <button class="btn-main" onclick="location.reload()">MAIN LAGI</button>
+            </div>
         </div>
     </div>
 
-    <div id="status">Cari Pintu Merah!</div>
+    <div id="controls-area">
+        <div class="dpad-grid">
+            <div></div>
+            <button class="btn-ctrl" ontouchstart="move(1)" onclick="move(1)">▲</button>
+            <div></div>
 
-    <div id="controls">
-        <div class="btn" onclick="rotate(-1)">&#8634;</div>
-        <div class="btn" onclick="move(1)">&#8593;</div>
-        <div class="btn" onclick="rotate(1)">&#8635;</div>
-        
-        <div class="btn btn-empty"></div>
-        <div class="btn" onclick="move(-1)">&#8595;</div>
-        <div class="btn btn-empty"></div>
+            <button class="btn-ctrl" ontouchstart="rotate(-1)" onclick="rotate(-1)">◀</button>
+            <button class="btn-ctrl" ontouchstart="move(-1)" onclick="move(-1)">▼</button>
+            <button class="btn-ctrl" ontouchstart="rotate(1)" onclick="rotate(1)">▶</button>
+        </div>
     </div>
 
     <script>
-        // --- KONFIGURASI GAME ---
+        // --- SETUP ---
         const canvas = document.getElementById('screen');
         const ctx = canvas.getContext('2d');
+        const mapCanvas = document.getElementById('minimap');
+        const mapCtx = mapCanvas.getContext('2d');
+        
+        const mapOverlay = document.getElementById('map-overlay');
         const winScreen = document.getElementById('win-screen');
-        const statusText = document.getElementById('status');
+        const statusToast = document.getElementById('status-toast');
 
-        // Peta Labirin: 1 = Dinding, 0 = Jalan, 2 = Pintu Keluar
-        // Ukuran peta 10x10
+        // MAP (1 = Dinding, 0 = Jalan, 2 = Tujuan)
         const mapSize = 10;
         const map = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -159,176 +271,149 @@
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ];
 
-        // Posisi Pemain
-        let playerX = 1.5; // Posisi X (tengah kotak)
-        let playerY = 8.5; // Posisi Y (tengah kotak)
-        let playerDirX = 0; // Arah pandang X
-        let playerDirY = -1; // Arah pandang Y (Menghadap atas)
-        let planeX = 0.66; // Bidang kamera (FOV)
-        let planeY = 0;
-
+        let playerX = 1.5, playerY = 8.5; 
+        let playerDirX = 0, playerDirY = -1; 
+        let planeX = 0.66, planeY = 0;
         let gameEnded = false;
+        let isMapVisible = false;
 
-        // --- ENGINE RAYCASTING ---
+        // Palette Warna
+        const colors = {
+            sky: "#0f172a", floor: "#1e293b",
+            wall: "#3b82f6", wallSide: "#2563eb",
+            door: "#f59e0b", doorSide: "#d97706"
+        };
+
+        // --- RENDER ---
         function draw() {
-            // Langit dan Lantai
-            ctx.fillStyle = "#111"; // Langit
+            // Background
+            ctx.fillStyle = colors.sky; 
             ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-            ctx.fillStyle = "#222"; // Lantai
+            ctx.fillStyle = colors.floor; 
             ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
-            // Raycasting Loop
+            // Raycasting
             for (let x = 0; x < canvas.width; x++) {
-                // Hitung posisi ray dan arah
                 let cameraX = 2 * x / canvas.width - 1;
                 let rayDirX = playerDirX + planeX * cameraX;
                 let rayDirY = playerDirY + planeY * cameraX;
+                let mapX = Math.floor(playerX), mapY = Math.floor(playerY);
+                let sideDistX, sideDistY, deltaDistX = Math.abs(1/rayDirX), deltaDistY = Math.abs(1/rayDirY);
+                let stepX, stepY, hit = 0, side, wallType = 0;
 
-                // Di kotak mana kita berada di peta
-                let mapX = Math.floor(playerX);
-                let mapY = Math.floor(playerY);
+                if (rayDirX < 0) { stepX = -1; sideDistX = (playerX - mapX) * deltaDistX; }
+                else { stepX = 1; sideDistX = (mapX + 1.0 - playerX) * deltaDistX; }
+                if (rayDirY < 0) { stepY = -1; sideDistY = (playerY - mapY) * deltaDistY; }
+                else { stepY = 1; sideDistY = (mapY + 1.0 - playerY) * deltaDistY; }
 
-                // Variabel untuk algoritma DDA (Digital Differential Analyzer)
-                let sideDistX, sideDistY;
-                let deltaDistX = Math.abs(1 / rayDirX);
-                let deltaDistY = Math.abs(1 / rayDirY);
-                let perpWallDist;
-                let stepX, stepY;
-                let hit = 0;
-                let side; // 0 untuk dinding Utara/Selatan, 1 untuk Timur/Barat
-                let wallType = 0;
-
-                // Hitung step dan sideDist awal
-                if (rayDirX < 0) {
-                    stepX = -1;
-                    sideDistX = (playerX - mapX) * deltaDistX;
-                } else {
-                    stepX = 1;
-                    sideDistX = (mapX + 1.0 - playerX) * deltaDistX;
-                }
-                if (rayDirY < 0) {
-                    stepY = -1;
-                    sideDistY = (playerY - mapY) * deltaDistY;
-                } else {
-                    stepY = 1;
-                    sideDistY = (mapY + 1.0 - playerY) * deltaDistY;
-                }
-
-                // Lakukan DDA (Mencari dinding)
                 while (hit === 0) {
-                    if (sideDistX < sideDistY) {
-                        sideDistX += deltaDistX;
-                        mapX += stepX;
-                        side = 0;
-                    } else {
-                        sideDistY += deltaDistY;
-                        mapY += stepY;
-                        side = 1;
-                    }
-                    if (map[mapY][mapX] > 0) {
-                        hit = 1;
-                        wallType = map[mapY][mapX];
-                    }
+                    if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+                    else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                    if (map[mapY][mapX] > 0) { hit = 1; wallType = map[mapY][mapX]; }
                 }
 
-                // Hitung jarak ke dinding (untuk menghindari efek fisheye)
-                if (side === 0) perpWallDist = (mapX - playerX + (1 - stepX) / 2) / rayDirX;
-                else perpWallDist = (mapY - playerY + (1 - stepY) / 2) / rayDirY;
-
-                // Hitung tinggi garis yang akan digambar
+                let perpWallDist = (side === 0) ? (mapX - playerX + (1 - stepX)/2)/rayDirX : (mapY - playerY + (1 - stepY)/2)/rayDirY;
                 let lineHeight = Math.floor(canvas.height / perpWallDist);
-
-                // Hitung pixel awal dan akhir gambar
                 let drawStart = -lineHeight / 2 + canvas.height / 2;
-                if (drawStart < 0) drawStart = 0;
+                if(drawStart < 0) drawStart = 0;
                 let drawEnd = lineHeight / 2 + canvas.height / 2;
-                if (drawEnd >= canvas.height) drawEnd = canvas.height - 1;
+                if(drawEnd >= canvas.height) drawEnd = canvas.height - 1;
 
-                // Tentukan warna
-                let color;
-                if (wallType === 2) {
-                    // Pintu Keluar (Merah)
-                    color = side === 1 ? "#cc0000" : "#ff0000";
-                } else {
-                    // Dinding Biasa (Hijau Retro)
-                    // Beri shading sedikit gelap jika sisi berbeda untuk efek 3D
-                    color = side === 1 ? "#00aa00" : "#00dd00";
-                }
-
-                // Gambar garis vertikal
+                let color = (wallType === 2) ? (side === 1 ? colors.doorSide : colors.door) : (side === 1 ? colors.wallSide : colors.wall);
                 ctx.fillStyle = color;
                 ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
             }
+            if(isMapVisible) drawMinimap();
         }
 
-        // --- LOGIKA GERAK ---
-        
+        function toggleMap() {
+            isMapVisible = !isMapVisible;
+            mapOverlay.style.display = isMapVisible ? "flex" : "none";
+            if(isMapVisible) drawMinimap();
+        }
+
+        function drawMinimap() {
+            mapCtx.fillStyle = "#0f172a";
+            mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+            let tileSize = mapCanvas.width / mapSize;
+
+            for(let y=0; y<mapSize; y++) {
+                for(let x=0; x<mapSize; x++) {
+                    let tile = map[y][x];
+                    if(tile > 0) {
+                        mapCtx.fillStyle = (tile === 2) ? "#f59e0b" : "#334155";
+                        mapCtx.beginPath();
+                        mapCtx.roundRect(x*tileSize+2, y*tileSize+2, tileSize-4, tileSize-4, 4);
+                        mapCtx.fill();
+                    }
+                }
+            }
+            // Player
+            let px = playerX * tileSize, py = playerY * tileSize;
+            mapCtx.fillStyle = "#3b82f6";
+            mapCtx.beginPath(); mapCtx.arc(px, py, tileSize/3, 0, Math.PI*2); mapCtx.fill();
+            // Arrow
+            mapCtx.strokeStyle = "white"; mapCtx.lineWidth = 3;
+            mapCtx.beginPath(); mapCtx.moveTo(px, py); mapCtx.lineTo(px + playerDirX*25, py + playerDirY*25); mapCtx.stroke();
+        }
+
+        // --- MOVEMENT ---
+        // Prevent double firing on devices that support touch and click
+        let lastMove = 0;
+
         function move(dir) {
             if (gameEnded) return;
+            if (Date.now() - lastMove < 100) return; // Debounce
+            lastMove = Date.now();
 
-            // Kecepatan gerak
-            let moveSpeed = 0.5 * dir; // Gerak setengah kotak per tekan
-
-            // Prediksi posisi baru
+            let moveSpeed = 0.5 * dir;
             let newX = playerX + playerDirX * moveSpeed;
             let newY = playerY + playerDirY * moveSpeed;
 
-            // Cek Tabrakan X (Sederhana)
-            // Kita cek margin 0.2 agar tidak menempel dinding
-            if (map[Math.floor(playerY)][Math.floor(newX + (dir > 0 ? 0.2 : -0.2) * playerDirX)] === 0 || 
-                map[Math.floor(playerY)][Math.floor(newX + (dir > 0 ? 0.2 : -0.2) * playerDirX)] === 2) {
-                playerX = newX;
-            }
-
-            // Cek Tabrakan Y
-            if (map[Math.floor(newY + (dir > 0 ? 0.2 : -0.2) * playerDirY)][Math.floor(playerX)] === 0 || 
-                map[Math.floor(newY + (dir > 0 ? 0.2 : -0.2) * playerDirY)][Math.floor(playerX)] === 2) {
-                playerY = newY;
-            }
-
+            // Simple Collision
+            if (map[Math.floor(playerY)][Math.floor(newX + (dir>0?0.2:-0.2)*playerDirX)] !== 1) playerX = newX;
+            if (map[Math.floor(newY + (dir>0?0.2:-0.2)*playerDirY)][Math.floor(playerX)] !== 1) playerY = newY;
+            
             checkWin();
             draw();
         }
 
         function rotate(dir) {
             if (gameEnded) return;
+            if (Date.now() - lastMove < 100) return;
+            lastMove = Date.now();
 
-            // Kecepatan putar
-            let rotSpeed = 0.15 * dir; // Sekitar 8-9 derajat per tekan
-
-            // Rumus Rotasi Matriks
+            let rotSpeed = 0.15 * dir;
             let oldDirX = playerDirX;
             playerDirX = playerDirX * Math.cos(rotSpeed) - playerDirY * Math.sin(rotSpeed);
             playerDirY = oldDirX * Math.sin(rotSpeed) + playerDirY * Math.cos(rotSpeed);
-            
             let oldPlaneX = planeX;
             planeX = planeX * Math.cos(rotSpeed) - planeY * Math.sin(rotSpeed);
             planeY = oldPlaneX * Math.sin(rotSpeed) + planeY * Math.cos(rotSpeed);
-
             draw();
         }
 
         function checkWin() {
-            // Cek apakah pemain berada di dalam kotak dengan nilai 2 (Pintu)
             if (map[Math.floor(playerY)][Math.floor(playerX)] === 2) {
                 gameEnded = true;
                 winScreen.style.display = "flex";
-                statusText.innerText = "SELAMAT! ANDA KELUAR.";
+                statusToast.innerText = "SELESAI!";
+                statusToast.style.background = "#10b981";
             }
         }
 
-        // --- INPUT KEYBOARD ---
+        // Prevent Default Touch Behaviors (Zooming/Scrolling)
+        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+        
+        // Keyboard Support (Optional)
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp' || e.key === 'w') move(1);
-            if (e.key === 'ArrowDown' || e.key === 's') move(-1);
-            if (e.key === 'ArrowLeft' || e.key === 'a') rotate(-1);
-            if (e.key === 'ArrowRight' || e.key === 'd') rotate(1);
+            if(e.key==='ArrowUp'||e.key==='w') move(1);
+            if(e.key==='ArrowDown'||e.key==='s') move(-1);
+            if(e.key==='ArrowLeft'||e.key==='a') rotate(-1);
+            if(e.key==='ArrowRight'||e.key==='d') rotate(1);
         });
 
-        // --- INIT ---
-        // Gambar frame pertama
         draw();
-
     </script>
 </body>
 </html>
