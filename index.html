@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Mobile Maze 3D</title>
+    <title>Maze 3D: Time Attack</title>
     <style>
         :root {
             --bg-color: #0f172a;
             --primary: #3b82f6;
-            --accent: #f59e0b;
+            --accent: #10b981;     /* Hijau Emerald */
             --surface: #1e293b;
             --text: #f8fafc;
         }
@@ -22,67 +22,60 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            touch-action: none; /* Mencegah pull-to-refresh dll */
+            touch-action: none;
         }
 
-        /* --- TOP BAR (Header & Utility) --- */
+        /* --- HEADER & HUD --- */
         header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px 20px;
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 20;
+            padding: 10px 20px;
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             height: 60px;
             box-sizing: border-box;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            z-index: 20;
         }
 
-        h1 {
-            font-size: 16px;
-            font-weight: 800;
-            margin: 0;
-            color: var(--primary);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .header-actions {
+        .hud-group {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
+        .level-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+        .timer-box { 
+            font-family: 'Courier New', monospace; 
+            font-size: 24px; 
+            font-weight: bold; 
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        
         .btn-icon {
             background: rgba(255,255,255,0.1);
             border: none;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: 12px;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 20px;
             cursor: pointer;
         }
-        .btn-icon:active { background: var(--primary); }
 
-        /* --- GAME AREA (Middle) --- */
+        /* --- GAME AREA --- */
         #game-container {
-            flex: 1; /* Mengisi sisa ruang */
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
             padding: 10px;
             background: #000;
+            position: relative;
         }
 
         #game-frame {
-            width: 100%;
-            height: 100%;
-            max-width: 600px; /* Batas tablet */
+            width: 100%; height: 100%; max-width: 600px;
             position: relative;
             border-radius: 16px;
             overflow: hidden;
@@ -90,145 +83,141 @@
             border: 2px solid #333;
         }
 
-        canvas#screen {
-            width: 100%;
-            height: 100%;
-            display: block;
-            image-rendering: pixelated;
-        }
+        canvas#screen { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 
-        /* --- OVERLAYS --- */
-        #map-overlay, #win-screen {
+        /* --- SCREENS (MENU, OVERLAYS) --- */
+        .overlay-screen {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-        }
-
-        #map-overlay { background: rgba(15, 23, 42, 0.85); }
-        #win-screen { background: rgba(15, 23, 42, 0.95); }
-
-        canvas#minimap {
-            background: #000;
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-        
-        .overlay-msg {
-            margin-top: 15px;
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .btn-main {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
-        }
-
-        /* --- CONTROLS (Bottom) --- */
-        #controls-area {
-            height: 280px; /* Area tetap untuk kontrol */
-            background: var(--surface);
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding-bottom: 20px; /* Safe area for iPhone home bar */
+            z-index: 50;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { font-size: 28px; margin: 0 0 10px 0; background: linear-gradient(to right, #3b82f6, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 32px; margin: 10px 0; color: white; }
+        p { color: #94a3b8; margin-bottom: 25px; }
+
+        .stat-result {
+            font-size: 40px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent);
+            margin: 10px 0 30px 0;
+            font-weight: bold;
+        }
+
+        /* Level Grid */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn-level {
+            background: var(--surface);
+            border: 2px solid var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-level:active { transform: scale(0.95); background: var(--primary); }
+
+        .btn-main {
+            background: var(--primary);
+            color: white; border: none;
+            padding: 15px 40px; border-radius: 50px;
+            font-size: 18px; font-weight: bold;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+        }
+
+        /* Minimap */
+        #map-overlay { background: rgba(0,0,0,0.85); display: none; }
+        canvas#minimap { background: #000; border-radius: 12px; border: 2px solid var(--primary); }
+
+        /* --- CONTROLS --- */
+        #controls-area {
+            height: 260px;
+            background: var(--surface);
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding-bottom: 20px;
             box-shadow: 0 -5px 30px rgba(0,0,0,0.3);
             border-top: 1px solid rgba(255,255,255,0.05);
         }
 
         .dpad-grid {
             display: grid;
-            grid-template-columns: 80px 80px 80px;
-            grid-template-rows: 80px 80px;
+            grid-template-columns: 75px 75px 75px;
+            grid-template-rows: 75px 75px;
             gap: 10px;
-            justify-content: center;
-            align-content: center;
         }
 
         .btn-ctrl {
-            width: 80px;
-            height: 80px;
-            border-radius: 24px;
+            width: 75px; height: 75px;
+            border-radius: 22px;
             background: linear-gradient(145deg, #253146, #1a2332);
-            box-shadow: 8px 8px 16px #0f141d, -8px -8px 16px #2d3e5b;
-            border: none;
-            color: var(--primary);
-            font-size: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            transition: transform 0.05s;
+            box-shadow: 6px 6px 12px #0f141d, -6px -6px 12px #2d3e5b;
+            border: none; color: var(--primary);
+            font-size: 30px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
         }
+        .btn-ctrl:active { transform: scale(0.95); box-shadow: inset 4px 4px 8px #0f141d; color: white; }
 
-        .btn-ctrl:active {
-            box-shadow: inset 8px 8px 16px #0f141d, inset -8px -8px 16px #2d3e5b;
-            color: #fff;
-            transform: scale(0.95);
-        }
-
-        /* Status Text (Floating) */
-        #status-toast {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(245, 158, 11, 0.9); /* Amber */
-            color: black;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 12px;
-            pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Maze 3D</h1>
-        <div class="header-actions">
-            <button class="btn-icon" onclick="toggleMap()" title="Peta">🗺️</button>
-            <button class="btn-icon" onclick="location.reload()" title="Reset">↻</button>
+        <div class="hud-group">
+            <span class="level-label" id="level-indicator">LEVEL 1</span>
+            <div class="timer-box" id="timer-display">00:00</div>
         </div>
+        <button class="btn-icon" onclick="toggleMap()">🗺️</button>
+        <button class="btn-icon" onclick="showMenu()">☰</button>
     </header>
-
-    <div id="status-toast">CARI PINTU KUNING</div>
 
     <div id="game-container">
         <div id="game-frame">
             <canvas id="screen" width="320" height="240"></canvas>
             
-            <div id="map-overlay" onclick="toggleMap()">
-                <canvas id="minimap" width="250" height="250"></canvas>
-                <div class="overlay-msg">Ketuk layar untuk menutup peta</div>
+            <div id="menu-screen" class="overlay-screen">
+                <h1>PILIH LABIRIN</h1>
+                <p>Cari jalan keluar secepat mungkin!</p>
+                <div class="level-grid">
+                    <button class="btn-level" onclick="startLevel(0)">1</button>
+                    <button class="btn-level" onclick="startLevel(1)">2</button>
+                    <button class="btn-level" onclick="startLevel(2)">3</button>
+                    <button class="btn-level" onclick="startLevel(3)">4</button>
+                    <button class="btn-level" onclick="startLevel(4)">5</button>
+                </div>
             </div>
 
-            <div id="win-screen">
-                <h2 style="font-size: 32px; color: #fbbf24; margin-bottom: 5px;">BERHASIL!</h2>
-                <p style="color: #cbd5e1;">Anda keluar dari labirin.</p>
-                <button class="btn-main" onclick="location.reload()">MAIN LAGI</button>
+            <div id="map-overlay" class="overlay-screen" onclick="toggleMap()">
+                <canvas id="minimap" width="220" height="220"></canvas>
+                <p style="margin-top:15px; font-size:12px;">Ketuk untuk tutup</p>
+            </div>
+
+            <div id="win-screen" class="overlay-screen hidden">
+                <h2 style="color: #fbbf24;">SELESAI!</h2>
+                <p>Catatan Waktu Anda:</p>
+                <div class="stat-result" id="final-time">00:00</div>
+                <button class="btn-main" onclick="nextLevel()">Level Selanjutnya</button>
+                <button class="btn-icon" style="margin-top:15px; background:transparent;" onclick="showMenu()">Menu Utama</button>
             </div>
         </div>
     </div>
@@ -238,7 +227,6 @@
             <div></div>
             <button class="btn-ctrl" ontouchstart="move(1)" onclick="move(1)">▲</button>
             <div></div>
-
             <button class="btn-ctrl" ontouchstart="rotate(-1)" onclick="rotate(-1)">◀</button>
             <button class="btn-ctrl" ontouchstart="move(-1)" onclick="move(-1)">▼</button>
             <button class="btn-ctrl" ontouchstart="rotate(1)" onclick="rotate(1)">▶</button>
@@ -246,53 +234,221 @@
     </div>
 
     <script>
-        // --- SETUP ---
+        // --- DATA LEVEL ---
+        // 1=Dinding, 0=Jalan, 2=Pintu Keluar, 9=Posisi Start
+        const levels = [
+            { // Level 1: Mudah
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,1,0,0,2,1],
+                    [1,0,1,1,0,1,0,1,0,1],
+                    [1,0,1,0,0,0,0,1,0,1],
+                    [1,0,1,0,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,0,1,1,0,1,0,1],
+                    [1,0,1,0,1,0,0,1,0,1],
+                    [1,0,0,0,9,0,0,1,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ]
+            },
+            { // Level 2: Zigzag
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,2,0,1,0,0,0,1,0,1],
+                    [1,1,0,1,0,1,0,1,0,1],
+                    [1,0,0,0,0,1,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,1,0,1],
+                    [1,1,1,1,1,1,0,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,1,1,1,1,1,1],
+                    [1,9,1,1,1,1,1,1,1,1]
+                ]
+            },
+            { // Level 3: Ruangan
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,1,2,0,1],
+                    [1,0,1,1,1,0,1,1,0,1],
+                    [1,0,1,0,0,0,0,0,0,1],
+                    [1,0,1,0,1,1,0,1,1,1],
+                    [1,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,0,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,0,1,1,1,1,1,0,1],
+                    [1,9,0,1,1,1,1,1,1,1]
+                ]
+            },
+            { // Level 4: Spiral Kecil
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,9,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,0,1],
+                    [1,0,0,0,0,0,0,1,0,1],
+                    [1,0,1,1,1,1,0,1,0,1],
+                    [1,0,1,2,0,1,0,1,0,1],
+                    [1,0,1,1,0,1,0,1,0,1],
+                    [1,0,0,0,0,1,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ]
+            },
+            { // Level 5: Labirin Buntu
+                map: [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,2,1,0,0,0,1,0,0,1],
+                    [1,0,1,0,1,0,1,0,1,1],
+                    [1,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,1,1,0,1,1,0,1],
+                    [1,0,0,0,0,0,1,0,0,1],
+                    [1,0,1,1,1,1,1,0,1,1],
+                    [1,0,0,0,1,0,0,0,0,1],
+                    [1,1,1,0,1,0,1,1,0,1],
+                    [1,9,0,0,1,0,0,0,0,1]
+                ]
+            }
+        ];
+
+        // --- VARIABEL GAME ---
         const canvas = document.getElementById('screen');
         const ctx = canvas.getContext('2d');
         const mapCanvas = document.getElementById('minimap');
         const mapCtx = mapCanvas.getContext('2d');
         
-        const mapOverlay = document.getElementById('map-overlay');
-        const winScreen = document.getElementById('win-screen');
-        const statusToast = document.getElementById('status-toast');
-
-        // MAP (1 = Dinding, 0 = Jalan, 2 = Tujuan)
-        const mapSize = 10;
-        const map = [
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [1, 0, 0, 0, 0, 1, 0, 0, 2, 1],
-            [1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            [1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1, 0, 0, 1, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        ];
-
-        let playerX = 1.5, playerY = 8.5; 
-        let playerDirX = 0, playerDirY = -1; 
-        let planeX = 0.66, planeY = 0;
-        let gameEnded = false;
+        let currentLevelIdx = 0;
+        let currentMap = [];
+        let mapSize = 10;
+        
+        let playerX, playerY, playerDirX, playerDirY, planeX, planeY;
+        let isGameRunning = false;
         let isMapVisible = false;
 
-        // Palette Warna
-        const colors = {
-            sky: "#0f172a", floor: "#1e293b",
-            wall: "#3b82f6", wallSide: "#2563eb",
-            door: "#f59e0b", doorSide: "#d97706"
-        };
+        // Timer Variables
+        let elapsedTime = 0;
+        let timerInterval = null;
+        const timerDisplay = document.getElementById('timer-display');
+        const finalTimeDisplay = document.getElementById('final-time');
+        const levelIndicator = document.getElementById('level-indicator');
 
-        // --- RENDER ---
+        // Screens
+        const menuScreen = document.getElementById('menu-screen');
+        const mapOverlay = document.getElementById('map-overlay');
+        const winScreen = document.getElementById('win-screen');
+
+        // Warna
+        const colors = { sky: "#0f172a", floor: "#1e293b", wall: "#3b82f6", wallSide: "#2563eb", door: "#f59e0b", doorSide: "#d97706" };
+
+        // --- CORE FUNCTIONS ---
+
+        function startLevel(idx) {
+            if (idx >= levels.length) idx = 0;
+            currentLevelIdx = idx;
+            
+            // Load Map
+            let levelData = levels[idx];
+            currentMap = JSON.parse(JSON.stringify(levelData.map)); 
+            
+            // Reset Timer
+            elapsedTime = 0;
+            
+            // Cari posisi start (9)
+            for(let y=0; y<mapSize; y++) {
+                for(let x=0; x<mapSize; x++) {
+                    if(currentMap[y][x] === 9) {
+                        playerX = x + 0.5;
+                        playerY = y + 0.5;
+                        currentMap[y][x] = 0;
+                    }
+                }
+            }
+
+            // Reset Arah
+            playerDirX = 0; playerDirY = -1;
+            planeX = 0.66; planeY = 0;
+
+            // UI Reset
+            levelIndicator.innerText = "LEVEL " + (idx + 1);
+            hideAllScreens();
+            
+            isGameRunning = true;
+            startTimer();
+            draw();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                if(!isGameRunning) return;
+                elapsedTime++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.innerText = formatTime(elapsedTime);
+        }
+
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60);
+            let s = seconds % 60;
+            return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        function levelComplete() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            finalTimeDisplay.innerText = formatTime(elapsedTime);
+            winScreen.classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            if (currentLevelIdx < levels.length - 1) {
+                startLevel(currentLevelIdx + 1);
+            } else {
+                showMenu();
+                alert("SELAMAT! ANDA MENAMATKAN SEMUA LEVEL!");
+            }
+        }
+
+        function showMenu() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            hideAllScreens();
+            menuScreen.classList.remove('hidden'); 
+            menuScreen.style.display = 'flex';
+            
+            // Render background hitam
+            ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        }
+
+        function hideAllScreens() {
+            menuScreen.style.display = 'none';
+            mapOverlay.classList.add('hidden');
+            winScreen.classList.add('hidden');
+        }
+
+        function toggleMap() {
+            if(!isGameRunning) return;
+            isMapVisible = !isMapVisible;
+            if(isMapVisible) {
+                mapOverlay.classList.remove('hidden');
+                mapOverlay.style.display = 'flex';
+                drawMinimap();
+            } else {
+                mapOverlay.classList.add('hidden');
+                mapOverlay.style.display = 'none';
+            }
+        }
+
+        // --- RAYCASTING ENGINE ---
         function draw() {
-            // Background
-            ctx.fillStyle = colors.sky; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-            ctx.fillStyle = colors.floor; 
-            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            if(!isGameRunning && isMapVisible === false) return;
 
-            // Raycasting
+            // Background
+            ctx.fillStyle = colors.sky; ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            ctx.fillStyle = colors.floor; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
             for (let x = 0; x < canvas.width; x++) {
                 let cameraX = 2 * x / canvas.width - 1;
                 let rayDirX = playerDirX + planeX * cameraX;
@@ -309,7 +465,7 @@
                 while (hit === 0) {
                     if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
                     else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-                    if (map[mapY][mapX] > 0) { hit = 1; wallType = map[mapY][mapX]; }
+                    if (currentMap[mapY][mapX] > 0) { hit = 1; wallType = currentMap[mapY][mapX]; }
                 }
 
                 let perpWallDist = (side === 0) ? (mapX - playerX + (1 - stepX)/2)/rayDirX : (mapY - playerY + (1 - stepY)/2)/rayDirY;
@@ -323,13 +479,6 @@
                 ctx.fillStyle = color;
                 ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
             }
-            if(isMapVisible) drawMinimap();
-        }
-
-        function toggleMap() {
-            isMapVisible = !isMapVisible;
-            mapOverlay.style.display = isMapVisible ? "flex" : "none";
-            if(isMapVisible) drawMinimap();
         }
 
         function drawMinimap() {
@@ -339,50 +488,35 @@
 
             for(let y=0; y<mapSize; y++) {
                 for(let x=0; x<mapSize; x++) {
-                    let tile = map[y][x];
+                    let tile = currentMap[y][x];
                     if(tile > 0) {
-                        mapCtx.fillStyle = (tile === 2) ? "#f59e0b" : "#334155";
-                        mapCtx.beginPath();
-                        mapCtx.roundRect(x*tileSize+2, y*tileSize+2, tileSize-4, tileSize-4, 4);
-                        mapCtx.fill();
+                        mapCtx.fillStyle = (tile === 2) ? "#f59e0b" : "#3b82f6";
+                        mapCtx.fillRect(x*tileSize+1, y*tileSize+1, tileSize-2, tileSize-2);
                     }
                 }
             }
-            // Player
             let px = playerX * tileSize, py = playerY * tileSize;
-            mapCtx.fillStyle = "#3b82f6";
-            mapCtx.beginPath(); mapCtx.arc(px, py, tileSize/3, 0, Math.PI*2); mapCtx.fill();
-            // Arrow
-            mapCtx.strokeStyle = "white"; mapCtx.lineWidth = 3;
-            mapCtx.beginPath(); mapCtx.moveTo(px, py); mapCtx.lineTo(px + playerDirX*25, py + playerDirY*25); mapCtx.stroke();
+            mapCtx.fillStyle = "white"; mapCtx.beginPath(); mapCtx.arc(px, py, tileSize/3, 0, Math.PI*2); mapCtx.fill();
+            mapCtx.strokeStyle = "white"; mapCtx.lineWidth = 2;
+            mapCtx.beginPath(); mapCtx.moveTo(px, py); mapCtx.lineTo(px + playerDirX*20, py + playerDirY*20); mapCtx.stroke();
         }
 
-        // --- MOVEMENT ---
-        // Prevent double firing on devices that support touch and click
-        let lastMove = 0;
-
+        // --- CONTROLS ---
+        let lastInput = 0;
         function move(dir) {
-            if (gameEnded) return;
-            if (Date.now() - lastMove < 100) return; // Debounce
-            lastMove = Date.now();
-
+            if (!isGameRunning) return;
+            if (Date.now() - lastInput < 80) return; lastInput = Date.now();
             let moveSpeed = 0.5 * dir;
             let newX = playerX + playerDirX * moveSpeed;
             let newY = playerY + playerDirY * moveSpeed;
-
-            // Simple Collision
-            if (map[Math.floor(playerY)][Math.floor(newX + (dir>0?0.2:-0.2)*playerDirX)] !== 1) playerX = newX;
-            if (map[Math.floor(newY + (dir>0?0.2:-0.2)*playerDirY)][Math.floor(playerX)] !== 1) playerY = newY;
-            
-            checkWin();
-            draw();
+            if (currentMap[Math.floor(playerY)][Math.floor(newX + (dir>0?0.2:-0.2)*playerDirX)] !== 1) playerX = newX;
+            if (currentMap[Math.floor(newY + (dir>0?0.2:-0.2)*playerDirY)][Math.floor(playerX)] !== 1) playerY = newY;
+            checkExit(); draw();
         }
 
         function rotate(dir) {
-            if (gameEnded) return;
-            if (Date.now() - lastMove < 100) return;
-            lastMove = Date.now();
-
+            if (!isGameRunning) return;
+            if (Date.now() - lastInput < 80) return; lastInput = Date.now();
             let rotSpeed = 0.15 * dir;
             let oldDirX = playerDirX;
             playerDirX = playerDirX * Math.cos(rotSpeed) - playerDirY * Math.sin(rotSpeed);
@@ -393,27 +527,24 @@
             draw();
         }
 
-        function checkWin() {
-            if (map[Math.floor(playerY)][Math.floor(playerX)] === 2) {
-                gameEnded = true;
-                winScreen.style.display = "flex";
-                statusToast.innerText = "SELESAI!";
-                statusToast.style.background = "#10b981";
+        function checkExit() {
+            if (currentMap[Math.floor(playerY)][Math.floor(playerX)] === 2) {
+                levelComplete();
             }
         }
 
-        // Prevent Default Touch Behaviors (Zooming/Scrolling)
-        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
-        
-        // Keyboard Support (Optional)
         document.addEventListener('keydown', (e) => {
             if(e.key==='ArrowUp'||e.key==='w') move(1);
             if(e.key==='ArrowDown'||e.key==='s') move(-1);
             if(e.key==='ArrowLeft'||e.key==='a') rotate(-1);
             if(e.key==='ArrowRight'||e.key==='d') rotate(1);
         });
+        
+        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
-        draw();
+        // Init
+        showMenu();
+
     </script>
 </body>
 </html>
