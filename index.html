@@ -3,374 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maze dengan Kompas</title>
+    <title>Retro Maze 3D</title>
     <style>
         body {
-            background-color: #222;
-            color: white;
+            background-color: #202020;
+            color: #00ff00;
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
-            overflow: hidden;
-            touch-action: none;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Mencegah zoom pada HP */
+        }
+
+        h1 {
+            font-size: 16px;
+            margin: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #88ff88;
         }
 
         #game-container {
             position: relative;
-            width: 100%;
-            max-width: 640px;
-            height: 60vh;
+            border: 4px solid #444;
             background: #000;
-            border-bottom: 4px solid #555;
+            width: 320px;
+            height: 240px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
         }
 
         canvas {
-            display: block;
             width: 100%;
             height: 100%;
-            image-rendering: pixelated;
+            image-rendering: pixelated; /* Efek kotak-kotak retro */
+            display: block;
         }
 
-        /* UI Overlay */
-        #ui-layer {
+        /* Scanlines effect overlay */
+        #scanlines {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-            text-shadow: 1px 1px 0 #000;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
 
-        /* KOMPAS STYLE */
-        #compass-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 60px;
-            height: 60px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #fff;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 15;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-
-        #compass-arrow {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            /* Transisi halus saat berputar */
-            transition: transform 0.1s linear; 
-        }
-
-        /* Jarum Merah (Menunjuk Utara) */
-        #compass-arrow::after {
-            content: 'N';
-            position: absolute;
-            top: 2px;
-            color: red;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        /* Jarum Putih (Menunjuk Selatan) */
-        #compass-arrow::before {
-            content: '▼'; /* Panah visual */
-            position: absolute;
-            top: 5px;
-            color: red;
-            font-size: 20px;
-            transform: scaleY(1.5); /* Membuat panah lebih lancip */
-        }
-
-        /* Garis silang kompas */
-        .compass-mark {
-            position: absolute;
-            background: rgba(255,255,255,0.3);
-        }
-        .mark-v { width: 2px; height: 100%; }
-        .mark-h { width: 100%; height: 2px; }
-
-        /* Controls */
+        /* Controls UI */
         #controls {
-            flex: 1;
-            width: 100%;
-            max-width: 640px;
+            margin-top: 20px;
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 10px;
-            padding: 20px;
-            box-sizing: border-box;
-            background: #333;
+            grid-template-columns: 60px 60px 60px;
+            grid-gap: 10px;
         }
 
         .btn {
-            background: #555;
-            border: 2px solid #777;
-            border-radius: 8px;
-            color: white;
+            background: #333;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            height: 50px;
             font-size: 24px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
-            cursor: pointer;
         }
-        .btn:active { background: #888; }
-        
-        #btn-up { grid-column: 2; grid-row: 1; }
-        #btn-left { grid-column: 1; grid-row: 2; }
-        #btn-down { grid-column: 2; grid-row: 2; }
-        #btn-right { grid-column: 3; grid-row: 2; }
 
-        /* Pesan Menang */
-        #win-screen {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 20;
-            text-align: center;
+        .btn:active {
+            background: #00ff00;
+            color: #000;
         }
-        #win-screen h1 { color: lime; margin: 0 0 20px 0; }
-        #win-screen button {
-            padding: 10px 20px;
-            font-size: 18px;
-            background: #444;
-            color: white;
-            border: 2px solid white;
-            cursor: pointer;
+
+        .btn-empty {
+            border: none;
+            background: transparent;
+            cursor: default;
+        }
+
+        #status {
+            margin-top: 10px;
+            height: 20px;
+            font-size: 14px;
+        }
+
+        #win-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            display: none; /* Hidden by default */
+            z-index: 10;
+        }
+        
+        #win-screen h2 {
+            color: yellow;
+            text-shadow: 2px 2px #f00;
         }
     </style>
 </head>
 <body>
 
+    <h1>Labirin Retro</h1>
+
     <div id="game-container">
-        <canvas id="gameCanvas" width="320" height="200"></canvas>
+        <canvas id="screen" width="160" height="120"></canvas>
+        <div id="scanlines"></div>
         
-        <div id="ui-layer">
-            <div>Cari Pintu Keluar (Hijau)</div>
-        </div>
-
-        <div id="compass-container">
-            <div class="compass-mark mark-v"></div>
-            <div class="compass-mark mark-h"></div>
-            <div id="compass-arrow"></div>
-        </div>
-
         <div id="win-screen">
-            <h1>BERHASIL KELUAR!</h1>
-            <button onclick="resetGame()">Main Lagi</button>
+            <h2>ANDA LOLOS!</h2>
+            <button class="btn" style="width:120px; font-size:14px;" onclick="location.reload()">Main Lagi</button>
         </div>
     </div>
+
+    <div id="status">Cari Pintu Merah!</div>
 
     <div id="controls">
-        <div class="btn" id="btn-up">▲</div>
-        <div class="btn" id="btn-left">◀</div>
-        <div class="btn" id="btn-down">▼</div>
-        <div class="btn" id="btn-right">▶</div>
+        <div class="btn" onclick="rotate(-1)">&#8634;</div>
+        <div class="btn" onclick="move(1)">&#8593;</div>
+        <div class="btn" onclick="rotate(1)">&#8635;</div>
+        
+        <div class="btn btn-empty"></div>
+        <div class="btn" onclick="move(-1)">&#8595;</div>
+        <div class="btn btn-empty"></div>
     </div>
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const compassArrow = document.getElementById('compass-arrow');
-    
-    // Konfigurasi Peta (1 = Dinding, 0 = Jalan, 9 = Finish)
-    const worldMap = [
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
-      [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1],
-      [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
-      [1,0,1,0,1,1,1,1,1,0,1,0,1,0,1],
-      [1,0,0,0,1,0,0,0,1,0,1,0,0,0,1],
-      [1,1,1,0,1,0,1,0,0,0,1,1,1,0,1],
-      [1,0,0,0,0,0,1,1,1,0,1,0,0,0,1],
-      [1,0,1,1,1,0,0,0,0,0,1,0,1,1,1],
-      [1,0,0,0,1,1,1,1,1,0,1,0,0,0,1],
-      [1,1,1,0,0,0,0,0,0,0,1,0,1,0,1],
-      [1,0,0,0,1,1,1,1,1,0,1,0,1,0,1],
-      [1,0,1,0,1,0,0,0,0,0,0,0,1,0,1],
-      [1,0,1,0,0,0,1,1,1,0,1,0,0,9,1], 
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-    ];
+    <script>
+        // --- KONFIGURASI GAME ---
+        const canvas = document.getElementById('screen');
+        const ctx = canvas.getContext('2d');
+        const winScreen = document.getElementById('win-screen');
+        const statusText = document.getElementById('status');
 
-    // Posisi Pemain
-    // Kita anggap Utara adalah bagian ATAS peta (Index Baris 0)
-    // Saat ini Start (1.5, 1.5). Jika dirX=1, dirY=0, pemain menghadap "BAWAH" (Selatan) di array.
-    let posX = 1.5, posY = 1.5; 
-    let dirX = 1, dirY = 0;     
-    let planeX = 0, planeY = 0.66; 
+        // Peta Labirin: 1 = Dinding, 0 = Jalan, 2 = Pintu Keluar
+        // Ukuran peta 10x10
+        const mapSize = 10;
+        const map = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 1, 0, 0, 2, 1],
+            [1, 0, 1, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
 
-    // Status Input
-    let keyUp = false, keyDown = false, keyLeft = false, keyRight = false;
-    let gameActive = true;
+        // Posisi Pemain
+        let playerX = 1.5; // Posisi X (tengah kotak)
+        let playerY = 8.5; // Posisi Y (tengah kotak)
+        let playerDirX = 0; // Arah pandang X
+        let playerDirY = -1; // Arah pandang Y (Menghadap atas)
+        let planeX = 0.66; // Bidang kamera (FOV)
+        let planeY = 0;
 
-    function gameLoop() {
-        if (!gameActive) return;
+        let gameEnded = false;
 
-        // 1. Movement Logic
-        const moveSpeed = 0.08;
-        const rotSpeed = 0.05;
+        // --- ENGINE RAYCASTING ---
+        function draw() {
+            // Langit dan Lantai
+            ctx.fillStyle = "#111"; // Langit
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            ctx.fillStyle = "#222"; // Lantai
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
-        if (keyUp) {
-            if(worldMap[Math.floor(posX + dirX * moveSpeed)][Math.floor(posY)] === 0 || worldMap[Math.floor(posX + dirX * moveSpeed)][Math.floor(posY)] === 9) posX += dirX * moveSpeed;
-            if(worldMap[Math.floor(posX)][Math.floor(posY + dirY * moveSpeed)] === 0 || worldMap[Math.floor(posX)][Math.floor(posY + dirY * moveSpeed)] === 9) posY += dirY * moveSpeed;
+            // Raycasting Loop
+            for (let x = 0; x < canvas.width; x++) {
+                // Hitung posisi ray dan arah
+                let cameraX = 2 * x / canvas.width - 1;
+                let rayDirX = playerDirX + planeX * cameraX;
+                let rayDirY = playerDirY + planeY * cameraX;
+
+                // Di kotak mana kita berada di peta
+                let mapX = Math.floor(playerX);
+                let mapY = Math.floor(playerY);
+
+                // Variabel untuk algoritma DDA (Digital Differential Analyzer)
+                let sideDistX, sideDistY;
+                let deltaDistX = Math.abs(1 / rayDirX);
+                let deltaDistY = Math.abs(1 / rayDirY);
+                let perpWallDist;
+                let stepX, stepY;
+                let hit = 0;
+                let side; // 0 untuk dinding Utara/Selatan, 1 untuk Timur/Barat
+                let wallType = 0;
+
+                // Hitung step dan sideDist awal
+                if (rayDirX < 0) {
+                    stepX = -1;
+                    sideDistX = (playerX - mapX) * deltaDistX;
+                } else {
+                    stepX = 1;
+                    sideDistX = (mapX + 1.0 - playerX) * deltaDistX;
+                }
+                if (rayDirY < 0) {
+                    stepY = -1;
+                    sideDistY = (playerY - mapY) * deltaDistY;
+                } else {
+                    stepY = 1;
+                    sideDistY = (mapY + 1.0 - playerY) * deltaDistY;
+                }
+
+                // Lakukan DDA (Mencari dinding)
+                while (hit === 0) {
+                    if (sideDistX < sideDistY) {
+                        sideDistX += deltaDistX;
+                        mapX += stepX;
+                        side = 0;
+                    } else {
+                        sideDistY += deltaDistY;
+                        mapY += stepY;
+                        side = 1;
+                    }
+                    if (map[mapY][mapX] > 0) {
+                        hit = 1;
+                        wallType = map[mapY][mapX];
+                    }
+                }
+
+                // Hitung jarak ke dinding (untuk menghindari efek fisheye)
+                if (side === 0) perpWallDist = (mapX - playerX + (1 - stepX) / 2) / rayDirX;
+                else perpWallDist = (mapY - playerY + (1 - stepY) / 2) / rayDirY;
+
+                // Hitung tinggi garis yang akan digambar
+                let lineHeight = Math.floor(canvas.height / perpWallDist);
+
+                // Hitung pixel awal dan akhir gambar
+                let drawStart = -lineHeight / 2 + canvas.height / 2;
+                if (drawStart < 0) drawStart = 0;
+                let drawEnd = lineHeight / 2 + canvas.height / 2;
+                if (drawEnd >= canvas.height) drawEnd = canvas.height - 1;
+
+                // Tentukan warna
+                let color;
+                if (wallType === 2) {
+                    // Pintu Keluar (Merah)
+                    color = side === 1 ? "#cc0000" : "#ff0000";
+                } else {
+                    // Dinding Biasa (Hijau Retro)
+                    // Beri shading sedikit gelap jika sisi berbeda untuk efek 3D
+                    color = side === 1 ? "#00aa00" : "#00dd00";
+                }
+
+                // Gambar garis vertikal
+                ctx.fillStyle = color;
+                ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
+            }
         }
-        if (keyDown) {
-            if(worldMap[Math.floor(posX - dirX * moveSpeed)][Math.floor(posY)] === 0 || worldMap[Math.floor(posX - dirX * moveSpeed)][Math.floor(posY)] === 9) posX -= dirX * moveSpeed;
-            if(worldMap[Math.floor(posX)][Math.floor(posY - dirY * moveSpeed)] === 0 || worldMap[Math.floor(posX)][Math.floor(posY - dirY * moveSpeed)] === 9) posY -= dirY * moveSpeed;
+
+        // --- LOGIKA GERAK ---
+        
+        function move(dir) {
+            if (gameEnded) return;
+
+            // Kecepatan gerak
+            let moveSpeed = 0.5 * dir; // Gerak setengah kotak per tekan
+
+            // Prediksi posisi baru
+            let newX = playerX + playerDirX * moveSpeed;
+            let newY = playerY + playerDirY * moveSpeed;
+
+            // Cek Tabrakan X (Sederhana)
+            // Kita cek margin 0.2 agar tidak menempel dinding
+            if (map[Math.floor(playerY)][Math.floor(newX + (dir > 0 ? 0.2 : -0.2) * playerDirX)] === 0 || 
+                map[Math.floor(playerY)][Math.floor(newX + (dir > 0 ? 0.2 : -0.2) * playerDirX)] === 2) {
+                playerX = newX;
+            }
+
+            // Cek Tabrakan Y
+            if (map[Math.floor(newY + (dir > 0 ? 0.2 : -0.2) * playerDirY)][Math.floor(playerX)] === 0 || 
+                map[Math.floor(newY + (dir > 0 ? 0.2 : -0.2) * playerDirY)][Math.floor(playerX)] === 2) {
+                playerY = newY;
+            }
+
+            checkWin();
+            draw();
         }
-        if (keyRight) {
-            const oldDirX = dirX;
-            dirX = dirX * Math.cos(-rotSpeed) - dirY * Math.sin(-rotSpeed);
-            dirY = oldDirX * Math.sin(-rotSpeed) + dirY * Math.cos(-rotSpeed);
-            const oldPlaneX = planeX;
-            planeX = planeX * Math.cos(-rotSpeed) - planeY * Math.sin(-rotSpeed);
-            planeY = oldPlaneX * Math.sin(-rotSpeed) + planeY * Math.cos(-rotSpeed);
-        }
-        if (keyLeft) {
-            const oldDirX = dirX;
-            dirX = dirX * Math.cos(rotSpeed) - dirY * Math.sin(rotSpeed);
-            dirY = oldDirX * Math.sin(rotSpeed) + dirY * Math.cos(rotSpeed);
-            const oldPlaneX = planeX;
+
+        function rotate(dir) {
+            if (gameEnded) return;
+
+            // Kecepatan putar
+            let rotSpeed = 0.15 * dir; // Sekitar 8-9 derajat per tekan
+
+            // Rumus Rotasi Matriks
+            let oldDirX = playerDirX;
+            playerDirX = playerDirX * Math.cos(rotSpeed) - playerDirY * Math.sin(rotSpeed);
+            playerDirY = oldDirX * Math.sin(rotSpeed) + playerDirY * Math.cos(rotSpeed);
+            
+            let oldPlaneX = planeX;
             planeX = planeX * Math.cos(rotSpeed) - planeY * Math.sin(rotSpeed);
             planeY = oldPlaneX * Math.sin(rotSpeed) + planeY * Math.cos(rotSpeed);
+
+            draw();
         }
 
-        // UPDATE KOMPAS
-        // Menghitung sudut hadap pemain dalam derajat
-        // atan2(y, x) memberikan sudut. Kita pakai (dirY, dirX)
-        let angleRad = Math.atan2(dirY, dirX);
-        let angleDeg = angleRad * (180 / Math.PI);
-        
-        // Logika Rotasi:
-        // Kita ingin Huruf 'N' menunjuk ke Utara Peta (Baris 0, atau -X direction).
-        // Karena sistem koordinat layar vs peta raycasting agak terbalik, kita sesuaikan offsetnya.
-        // -angleDeg memutar kompas berlawanan arah putaran pemain.
-        // -90 adalah penyesuaian agar 'N' menunjuk ke atas saat start.
-        compassArrow.style.transform = `rotate(${-angleDeg - 90}deg)`;
-
-        // Cek Menang
-        if (worldMap[Math.floor(posX)][Math.floor(posY)] === 9) {
-            gameActive = false;
-            document.getElementById('win-screen').style.display = 'flex';
-        }
-
-        // 2. Render Raycasting
-        ctx.fillStyle = "#87CEEB"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-        ctx.fillStyle = "#555555"; 
-        ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
-
-        for (let x = 0; x < canvas.width; x++) {
-            let cameraX = 2 * x / canvas.width - 1;
-            let rayDirX = dirX + planeX * cameraX;
-            let rayDirY = dirY + planeY * cameraX;
-
-            let mapX = Math.floor(posX);
-            let mapY = Math.floor(posY);
-            let sideDistX, sideDistY, perpWallDist;
-            let stepX, stepY;
-            let hit = 0, side;
-
-            let deltaDistX = Math.abs(1 / rayDirX);
-            let deltaDistY = Math.abs(1 / rayDirY);
-
-            if (rayDirX < 0) { stepX = -1; sideDistX = (posX - mapX) * deltaDistX; }
-            else { stepX = 1; sideDistX = (mapX + 1.0 - posX) * deltaDistX; }
-            if (rayDirY < 0) { stepY = -1; sideDistY = (posY - mapY) * deltaDistY; }
-            else { stepY = 1; sideDistY = (mapY + 1.0 - posY) * deltaDistY; }
-
-            while (hit === 0) {
-                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
-                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-                if (worldMap[mapX][mapY] > 0) hit = 1;
+        function checkWin() {
+            // Cek apakah pemain berada di dalam kotak dengan nilai 2 (Pintu)
+            if (map[Math.floor(playerY)][Math.floor(playerX)] === 2) {
+                gameEnded = true;
+                winScreen.style.display = "flex";
+                statusText.innerText = "SELAMAT! ANDA KELUAR.";
             }
-
-            if (side === 0) perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
-            else perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
-
-            let lineHeight = Math.floor(canvas.height / perpWallDist);
-            let drawStart = -lineHeight / 2 + canvas.height / 2;
-            if (drawStart < 0) drawStart = 0;
-            let drawEnd = lineHeight / 2 + canvas.height / 2;
-            if (drawEnd >= canvas.height) drawEnd = canvas.height - 1;
-
-            let color;
-            if (worldMap[mapX][mapY] === 9) {
-                color = "#00FF00"; 
-            } else {
-                if (side === 1) color = "#FFA500"; 
-                else color = "#CC8400"; 
-            }
-
-            ctx.fillStyle = color;
-            ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
         }
 
-        requestAnimationFrame(gameLoop);
-    }
+        // --- INPUT KEYBOARD ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'w') move(1);
+            if (e.key === 'ArrowDown' || e.key === 's') move(-1);
+            if (e.key === 'ArrowLeft' || e.key === 'a') rotate(-1);
+            if (e.key === 'ArrowRight' || e.key === 'd') rotate(1);
+        });
 
-    function resetGame() {
-        posX = 1.5; posY = 1.5;
-        dirX = 1; dirY = 0;
-        planeX = 0; planeY = 0.66;
-        document.getElementById('win-screen').style.display = 'none';
-        gameActive = true;
-        gameLoop();
-    }
+        // --- INIT ---
+        // Gambar frame pertama
+        draw();
 
-    // Keyboard Input
-    document.addEventListener('keydown', (e) => {
-        if(e.key === 'ArrowUp') keyUp = true;
-        if(e.key === 'ArrowDown') keyDown = true;
-        if(e.key === 'ArrowLeft') keyLeft = true;
-        if(e.key === 'ArrowRight') keyRight = true;
-    });
-    document.addEventListener('keyup', (e) => {
-        if(e.key === 'ArrowUp') keyUp = false;
-        if(e.key === 'ArrowDown') keyDown = false;
-        if(e.key === 'ArrowLeft') keyLeft = false;
-        if(e.key === 'ArrowRight') keyRight = false;
-    });
-
-    // Touch Controls
-    const setupBtn = (id, keyVar) => {
-        const btn = document.getElementById(id);
-        const set = (s) => {
-            if(keyVar === 'up') keyUp = s;
-            if(keyVar === 'down') keyDown = s;
-            if(keyVar === 'left') keyLeft = s;
-            if(keyVar === 'right') keyRight = s;
-        };
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); set(true); });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); set(false); });
-        btn.addEventListener('mousedown', () => set(true));
-        btn.addEventListener('mouseup', () => set(false));
-        btn.addEventListener('mouseleave', () => set(false));
-    };
-
-    setupBtn('btn-up', 'up');
-    setupBtn('btn-down', 'down');
-    setupBtn('btn-left', 'left');
-    setupBtn('btn-right', 'right');
-
-    requestAnimationFrame(gameLoop);
-
-</script>
+    </script>
 </body>
 </html>
